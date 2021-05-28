@@ -6,9 +6,12 @@
 # include <unistd.h>
 #include <stdlib.h>
 
+#define GREEN(string) "\x1b[32m" string "\x1b[0m"
+
 // в пустой (мёртвой) клетке, рядом с которой ровно три живые клетки, зарождается жизнь;
 // если у живой клетки есть две или три живые соседки, то эта клетка продолжает жить; 
-// в противном случае, если соседей меньше двух или больше трёх, клетка умирает («от одиночества» или «от перенаселённости»)
+// в противном случае, если соседей меньше двух или больше трёх, 
+// клетка умирает («от одиночества» или «от перенаселённости»)
 
 int     get_next_line(int fd, char **line)
 {
@@ -112,6 +115,66 @@ void print_map(char **map)
         printf("%s\n", map[i++]);
 }
 
+
+void print_map_char(char **map, int dead, int alive)
+{
+    int i = 0;
+    int j = 0;
+
+    while(map[i])
+    {
+        j = 0;
+
+        while (map[i][j])
+        {
+            if (map[i][j] == alive)
+                printf("" GREEN("o") "");
+                // printf("%c", map[i][j]);
+            else    
+                printf("%c", map[i][j]);
+            j++;
+        }
+        printf("\n");
+        i++;
+    }
+}
+
+char **move(char **map, int dead, int alive)
+{
+    int i = 1;
+    int j = 1;
+
+    int num_lines = 0;
+    int line_len = 0;
+    int num_friends = 0;
+    while (map[num_lines])
+    {
+        line_len = 0;
+        while(map[num_lines][line_len])
+            line_len++;
+        num_lines++;
+    }
+
+    while (i < num_lines-1)
+    {
+        j = 1;
+        while(j < line_len-1)
+        {
+            num_friends = count_friends(map, i, j, alive);
+            if (map[i][j] == dead && num_friends == 3)
+                map[i][j] = alive;
+            else if (map[i][j] == alive && (num_friends < 2 || num_friends > 3))
+                map[i][j] = dead;
+            // printf("num_friends for %d, %d, is %d\n", i, j, num_friends);
+            j++;
+        }
+        num_friends = count_friends(map, i, j, alive);
+        // printf("num_friends for %d, %d, is %d\n", i, j, num_friends);
+        i++;
+    }
+    return(map);
+}
+
 int main (int argc, char **argv)
 {
     int		fd;
@@ -152,34 +215,39 @@ int main (int argc, char **argv)
         num_lines++;
     }
 
+    // i = 1;
+    // j = 1;
 
-    i = 1;
-    j = 1;
+    // while (i < num_lines-1)
+    // {
+    //     j = 1;
+    //     while(j < line_len-1)
+    //     {
+    //         num_friends = count_friends(map, i, j, alive);
+    //         if (map[i][j] == dead && num_friends == 3)
+    //             map[i][j] = alive;
+    //         else if (map[i][j] == alive && (num_friends < 2 || num_friends > 3))
+    //             map[i][j] = dead;
+    //         // printf("num_friends for %d, %d, is %d\n", i, j, num_friends);
+    //         j++;
+    //     }
+    //     num_friends = count_friends(map, i, j, alive);
+    //     // printf("num_friends for %d, %d, is %d\n", i, j, num_friends);
+    //     i++;
+    // }
 
-    printf("%d\n", num_lines-1);
-    printf("%d\n", line_len-1);
+    print_map_char(map, dead, alive);
+    printf("\n");
+    sleep(1);
+    printf("\e[1;1H\e[2J");
 
-    while (i < num_lines-1)
+    while (1)
     {
-        j = 1;
-        while(j < line_len-1)
-        {
-            // printf("%c", map[i][j]);
-            num_friends = count_friends(map, i, j, alive);
-            if(map[i][j] == dead && num_friends == 3)
-                map[i][j] = alive;
-            printf("num_friends for %d, %d, is %d\n", i, j, num_friends);
-            j++;
-        }
-        // printf("\n");
-        num_friends = count_friends(map, i, j, alive);
-        printf("num_friends for %d, %d, is %d\n", i, j, num_friends);
-        i++;
+        map = move(map, dead, alive);
+        print_map_char(map, dead, alive);
+        printf("\n");
+        sleep(1);
+        printf("\e[1;1H\e[2J");
     }
-
-    // num_friends = count_friends(map, i, j, alive);
-    // printf("num_frinds for %d, %d, is %d\n", i, j, num_friends);
-    
-    print_map(map);
-    
+// printf("this is " GREEN("green") "!\n");
 }
