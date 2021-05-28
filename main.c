@@ -6,6 +6,31 @@
 # include <unistd.h>
 #include <stdlib.h>
 
+#include <time.h>
+#include <errno.h>    
+
+/* msleep(): Sleep for the requested number of milliseconds. */
+int msleep(long msec)
+{
+    struct timespec ts;
+    int res;
+
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+
+    return res;
+}
+
 #define GREEN(string) "\x1b[32m" string "\x1b[0m"
 
 // в пустой (мёртвой) клетке, рядом с которой ровно три живые клетки, зарождается жизнь;
@@ -163,6 +188,8 @@ char **move(char **map, int dead, int alive)
             num_friends = count_friends(map, i, j, alive);
             if (map[i][j] == dead && num_friends == 3)
                 map[i][j] = alive;
+            // else if (map[i][j] == alive && (num_friends == 2 || num_friends == 3))
+            //     map[i][j] = alive;
             else if (map[i][j] == alive && (num_friends < 2 || num_friends > 3))
                 map[i][j] = dead;
             // printf("num_friends for %d, %d, is %d\n", i, j, num_friends);
@@ -215,27 +242,6 @@ int main (int argc, char **argv)
         num_lines++;
     }
 
-    // i = 1;
-    // j = 1;
-
-    // while (i < num_lines-1)
-    // {
-    //     j = 1;
-    //     while(j < line_len-1)
-    //     {
-    //         num_friends = count_friends(map, i, j, alive);
-    //         if (map[i][j] == dead && num_friends == 3)
-    //             map[i][j] = alive;
-    //         else if (map[i][j] == alive && (num_friends < 2 || num_friends > 3))
-    //             map[i][j] = dead;
-    //         // printf("num_friends for %d, %d, is %d\n", i, j, num_friends);
-    //         j++;
-    //     }
-    //     num_friends = count_friends(map, i, j, alive);
-    //     // printf("num_friends for %d, %d, is %d\n", i, j, num_friends);
-    //     i++;
-    // }
-
     print_map_char(map, dead, alive);
     printf("\n");
     sleep(1);
@@ -246,8 +252,7 @@ int main (int argc, char **argv)
         map = move(map, dead, alive);
         print_map_char(map, dead, alive);
         printf("\n");
-        sleep(1);
-        printf("\e[1;1H\e[2J");
+        msleep(200);
+        printf("\e[1;1H\e[2J"); 
     }
-// printf("this is " GREEN("green") "!\n");
 }
