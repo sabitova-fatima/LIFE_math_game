@@ -12,6 +12,8 @@
 ![alt text](Color_coded_racetrack_large_channel.gif "Описание будет тут")
 
 ## Запуск: 
+```
 sh start.sh
+```
 
 Enjoy ^_^
